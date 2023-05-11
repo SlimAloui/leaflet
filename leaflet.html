@@ -1,0 +1,79 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+        integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
+        crossorigin=""/>
+        <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+        integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
+        crossorigin=""></script>
+        <script src="data.js"></script>
+        <script src="Exple.js"></script>
+        <style>
+            #map 
+            {
+                 width: 1800px;
+                 height: 1200px; 
+            }
+        </style>
+    </head>
+    
+    <body>
+        
+        
+        <div id="map"></div>
+        <script>
+            function generateRandomColor(){
+                let maxVal = 0xFFFFFF; // 16777215
+                let randomNumber = Math.random() * maxVal; 
+                randomNumber = Math.floor(randomNumber);
+                randomNumber = randomNumber.toString(16);
+                let randColor = randomNumber.padStart(6, 0);   
+                return `#${randColor.toUpperCase()}`
+            }
+
+            var map = L.map('map').setView([47.219308165444495, 2.5547264363205304], 7);;
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom : 19,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+            
+            var colors = [];
+            data.forEach(exple => {
+                colors.push({
+                    routeName : exple.routeName,
+                    color : generateRandomColor()
+                });
+            });
+
+            var myLines = [];
+            data.forEach(exple => {
+                var shapes = [];
+                exple.detailedSegments.forEach(element => {
+                    element.shape.forEach(item => {
+                        shapes.push([item.longitude, item.latitude]);
+                    });
+                });
+                myLines.push({
+                    "type": "LineString",
+                    "properties": {"routeName": exple.routeName},
+                    "coordinates": shapes
+                });
+            });
+
+            L.geoJSON(myLines, {
+                style: function(feature) {
+                    return colors.find(item => {
+                        if(item.routeName == feature.geometry.properties.routeName)
+                        {
+                            return {"color": item.color};
+                        }
+                    });
+                },
+                //style: { "color": "#0000ff" },
+                onEachFeature: function (feature, layer) {
+                    layer.bindPopup('<h1>' + feature.properties.routeName + '</h1>');
+                }
+            }).addTo(map);
+        </script>
+    </body>
+</html>
